@@ -2,7 +2,7 @@ tunnel: 489e2742-dc45-4dfb-9acf-3952746d296a
 credentials-file: /etc/cloudflared/credentials.json
 
 ingress:
-  - hostname: nodejs-my-docker-app.dhrunners.dpdns.org
+  - hostname: "nodejs-my-docker-app.dhrunners.dpdns.org"
     service: http://caddy:80
   - hostname: portainer-my-docker-app.dhrunners.dpdns.org
     service: http://caddy:80
@@ -11,26 +11,3 @@ ingress:
   - hostname: files-my-docker-app.dhrunners.dpdns.org
     service: http://caddy:80
   - service: http_status:404
-
-# ingress:
-#   - hostname: nodejs-my-docker-app.dhrunners.dpdns.org
-#     service: https://caddy:80
-#     originRequest:
-#       originServerName: nodejs-my-docker-app.dhrunners.dpdns.org
-#       noTLSVerify: true
-#   - hostname: portainer-my-docker-app.dhrunners.dpdns.org
-#     service: https://caddy:80
-#     originRequest:
-#       originServerName: portainer-my-docker-app.dhrunners.dpdns.org
-#       noTLSVerify: true
-#   - hostname: logs-my-docker-app.dhrunners.dpdns.org
-#     service: https://caddy:80
-#     originRequest:
-#       originServerName: logs-my-docker-app.dhrunners.dpdns.org
-#       noTLSVerify: true
-#   - hostname: files-my-docker-app.dhrunners.dpdns.org
-#     service: https://caddy:80
-#     originRequest:
-#       originServerName: files-my-docker-app.dhrunners.dpdns.org
-#       noTLSVerify: true
-#   - service: http_status:404
