@@ -10,4 +10,6 @@ ingress:
     service: http://caddy:80
   - hostname: files-my-docker-app.dhrunners.dpdns.org
     service: http://caddy:80
+  - hostname: ttyd-my-docker-app.dhrunners.dpdns.org
+    service: http://caddy:80
   - service: http_status:404
