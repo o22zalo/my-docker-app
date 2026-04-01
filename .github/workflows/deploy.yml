@@ -13,10 +13,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Npm install
+      # - name: Npm install
+      #   run: |
+      #     npm install -g @tltdh61/dotenvrtdb
+      #     dotenvrtdb -e .env --pull -eUrl="$RTDB_URL" --writefilebase64=./cloudflared-credentials.json --var=CLOUDFLARED_TUNNEL_CREDENTIALS_BASE64
+      # ----------------------------------------------------------------
+      #  2. Pull .env + credentials từ Firebase RTDB
+      # ----------------------------------------------------------------
+      - name: Pull .env & credentials from RTDB
         run: |
           npm install -g @tltdh61/dotenvrtdb
-          dotenvrtdb -e .env --pull -eUrl="$RTDB_URL" --writefilebase64=./cloudflared-credentials.json --var=CLOUDFLARED_TUNNEL_CREDENTIALS_BASE64
+          mkdir -p services/webssh/.ssh
+          dotenvrtdb -e .env --pull -eUrl="$RTDB_URL" \
+            --writefilebase64=./cloudflared-credentials.json \
+            --var=CLOUDFLARED_TUNNEL_CREDENTIALS_BASE64 \
+            --writefilebase64=./services/webssh/.ssh/id_rsa \
+            --var=SSH_PULL_DATA_PRIVATE_KEY_BASE64 \
+            --writefilebase64=./services/webssh/.ssh/known_hosts \
+            --var=SSH_RUNNER_PUBLIC_KEY_BASE64
+          chmod 600 services/webssh/.ssh/id_rsa || true
 
       - name: Check .env exists
         run: |

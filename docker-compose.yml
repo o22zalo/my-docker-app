@@ -76,21 +76,6 @@ services:
     restart: unless-stopped
 
   # ================================================================
-  #  PORTAINER — Quản lý Docker toàn diện qua UI
-  #  Có login riêng — không cần Caddy basicauth
-  # ================================================================
-  # portainer:
-  #   image: portainer/portainer-ce:latest
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - portainer_data:/data
-  #   labels:
-  #     - "caddy=http://${SUBDOMAIN_PORTAINER:-portainer-my-docker-app}.${DOMAIN}"
-  #     - "caddy.reverse_proxy={{upstreams 9000}}"
-  #   networks: [app_net]
-  #   restart: unless-stopped
-
-  # ================================================================
   #  DOZZLE — Xem log realtime của tất cả container
   # ================================================================
   dozzle:
@@ -118,6 +103,25 @@ services:
     labels:
       - "caddy=http://${SUBDOMAIN_FILEBROWSER:-files-my-docker-app}.${DOMAIN}"
       - "caddy.reverse_proxy={{upstreams 80}}"
+      # - "caddy.basic_auth=/*"
+      # - "caddy.basic_auth.${CADDY_AUTH_USER}=${CADDY_AUTH_HASH}"
+    networks: [app_net]
+    restart: unless-stopped
+
+  # ================================================================
+  #  WEBSSH — Terminal SSH vào host qua trình duyệt (ttyd)
+  #  ⚠️  Nên bật basic_auth để tránh expose terminal ra public
+  # ================================================================
+  webssh:
+    image: tsl0922/ttyd:latest
+    command: ["ttyd", "-W", "ssh", "-i", "/root/.ssh/id_rsa", "${SSH_USER:-root}@host.docker.internal"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./services/webssh/.ssh:/root/.ssh:ro # mount key từ host vào container
+    labels:
+      - "caddy=http://${SUBDOMAIN_WEBSSH:-ssh-my-docker-app}.${DOMAIN}"
+      - "caddy.reverse_proxy={{upstreams 7681}}"
       # - "caddy.basic_auth=/*"
       # - "caddy.basic_auth.${CADDY_AUTH_USER}=${CADDY_AUTH_HASH}"
     networks: [app_net]
