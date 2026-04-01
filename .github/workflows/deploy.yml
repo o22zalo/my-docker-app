@@ -33,13 +33,12 @@ jobs:
             --var=SSH_RUNNER_PUBLIC_KEY_BASE64
           chmod 600 services/webssh/.ssh/id_rsa || true
 
-      # ----------------------------------------------------------------
-      #  2b. Verify SSH files & restart sshd (trên GitHub Actions runner)
-      # ----------------------------------------------------------------
       - name: Verify SSH files & restart sshd
         run: |
           echo "====== Check id_rsa ======"
           if [ -f ./services/webssh/.ssh/id_rsa ]; then
+            # Fix trailing newline bị mất khi base64 decode
+            echo "" >> ./services/webssh/.ssh/id_rsa
             echo "✅ id_rsa exists ($(wc -c < ./services/webssh/.ssh/id_rsa) bytes)"
             head -1 ./services/webssh/.ssh/id_rsa | grep -q 'BEGIN' \
               && echo "✅ valid private key format" \
@@ -48,12 +47,17 @@ jobs:
             echo "❌ id_rsa NOT found"; exit 1
           fi
 
-          echo "====== Check known_hosts ======"
+          echo "====== Fix & check known_hosts ======"
           if [ -f ./services/webssh/.ssh/known_hosts ]; then
-            echo "✅ known_hosts exists"
+            # Nếu chưa có hostname prefix thì thêm vào
+            if ! grep -q 'host.docker.internal' ./services/webssh/.ssh/known_hosts; then
+              sed -i 's/^/host.docker.internal /' ./services/webssh/.ssh/known_hosts
+              echo "✅ Fixed known_hosts — added hostname prefix"
+            fi
+            echo "✅ known_hosts:"
             cat ./services/webssh/.ssh/known_hosts | sed 's/^/  /'
           else
-            echo "⚠️  known_hosts not found — SSH sẽ dùng StrictHostKeyChecking=no"
+            echo "⚠️  known_hosts not found"
           fi
 
           echo "====== Add pubkey vào authorized_keys của runner ======"
