@@ -64,6 +64,14 @@ jobs:
             && echo "✅ sshd is running" \
             || { echo "❌ sshd failed"; exit 1; }
 
+      - name: Fix sshd listen on all interfaces
+        run: |
+          sudo sed -i 's/^#ListenAddress 0.0.0.0/ListenAddress 0.0.0.0/' /etc/ssh/sshd_config
+          # Hoặc nếu đang bị restrict:
+          echo "ListenAddress 0.0.0.0" | sudo tee -a /etc/ssh/sshd_config
+          sudo systemctl restart ssh
+          sudo ss -tlnp | grep 22
+
       # - name: Verify SSH files & restart sshd
       #   run: |
       #     # Cho phép container đọc được (container root vẫn cần permission)
