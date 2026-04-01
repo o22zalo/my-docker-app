@@ -1,5 +1,7 @@
 # Environment — chứa secrets, KHÔNG commit
 .env
+.env.local.*
+test/*
 
 # Cloudflare credentials
 cloudflared/creds.json

@@ -1,23 +1,17 @@
 name: Deploy Stack
 
 on:
-  push:
-    branches: ["main"]
+  # push:
+  #   branches: ["main"]
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Prepare artifact folders
-        run: |
-          mkdir -p artifacts/docker-runtime/compose-files
-          cp docker-compose.yml artifacts/docker-runtime/compose-files/docker-compose.yml
-          if [ -f .env ]; then cp .env artifacts/docker-runtime/compose-files/.env; fi
 
       - name: Check .env exists
         run: |
@@ -25,9 +19,6 @@ jobs:
             echo "ERROR: .env file not found. Create .env from .env.example and fill values."
             exit 1
           fi
-
-      - name: Pull latest images
-        run: docker compose pull
 
       - name: Build & start services
         run: docker compose up -d --build --remove-orphans
