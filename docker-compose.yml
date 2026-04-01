@@ -43,9 +43,9 @@ services:
     image: tailscale/tailscale:latest
     hostname: my-docker-app
     environment:
-      TS_AUTHKEY: "${TS_CLIENT_SECRET}"
+      TS_AUTHKEY: "${TAILSCALE_CLIENT_SECRET}"
       TS_USERSPACE: false
-      # TS_EXTRA_ARGS: --advertise-tags=${TAILSCALE_TAGS:-tag:ci} --accept-dns=true --accept-routes
+      TS_EXTRA_ARGS: --advertise-tags=${TAILSCALE_TAGS:-container} --accept-dns=true --accept-routes
       TS_STATE_DIR: /var/lib/tailscale
     volumes:
       - tailscale_data:/var/lib/tailscale
