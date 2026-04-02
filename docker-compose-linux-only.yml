@@ -9,7 +9,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - caddy_data:/data
       - caddy_config:/config
     environment:
@@ -36,16 +36,15 @@ services:
       - caddy
 
   # ================================================================
-  #  TAILSCALE — Linux: kernel mode (full features)
-  #  Yêu cầu TUN device + NET_ADMIN capability
+  #  TAILSCALE — VPN nội bộ cho team (tuỳ chọn)
+  #  Team kết nối Tailscale VPN → truy cập Caddy qua IP tailscale
   # ================================================================
-  tailscale-linux:
-    profiles: ["linux-only"]
+  tailscale:
     image: tailscale/tailscale:latest
     hostname: my-docker-app
     environment:
       TS_AUTHKEY: "${TAILSCALE_CLIENT_SECRET}"
-      TS_USERSPACE: "false"
+      TS_USERSPACE: false
       TS_EXTRA_ARGS: --advertise-tags=${TAILSCALE_TAGS:-tag:container} --accept-dns=true --accept-routes
       TS_STATE_DIR: /var/lib/tailscale
     volumes:
@@ -58,24 +57,6 @@ services:
     restart: unless-stopped
 
   # ================================================================
-  #  TAILSCALE — Windows: userspace mode
-  #  Không cần TUN device, cap_add, network_mode: host
-  # ================================================================
-  tailscale-windows:
-    profiles: ["windows-only"]
-    image: tailscale/tailscale:latest
-    hostname: my-docker-app
-    environment:
-      TS_AUTHKEY: "${TAILSCALE_CLIENT_SECRET}"
-      TS_USERSPACE: "true"
-      TS_EXTRA_ARGS: --advertise-tags=${TAILSCALE_TAGS:-tag:container} --accept-dns=true
-      TS_STATE_DIR: /var/lib/tailscale
-    volumes:
-      - tailscale_data:/var/lib/tailscale
-    networks: [app_net]
-    restart: unless-stopped
-
-  # ================================================================
   #  NODE.JS APP — Dịch vụ chính Hello World
   # ================================================================
   app:
@@ -85,7 +66,6 @@ services:
       NODE_ENV: "${NODE_ENV:-production}"
       PORT: "${APP_PORT:-3000}"
       LOG_DIR: "${LOG_DIR:-/app/logs}"
-      CUR_OS: "${CUR_OS:-linux}"
     volumes:
       - ./logs/app:/app/logs
     labels:
@@ -102,7 +82,7 @@ services:
   dozzle:
     image: amir20/dozzle:latest
     volumes:
-      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "caddy=http://${SUBDOMAIN_DOZZLE:-logs-my-docker-app}.${DOMAIN}"
       - "caddy.reverse_proxy={{upstreams 8080}}"
@@ -117,6 +97,7 @@ services:
   filebrowser:
     image: filebrowser/filebrowser:latest
     command: --noauth --port 80 --root /srv --database /database/filebrowser.db
+
     volumes:
       - .:/srv
       - filebrowser_data:/database
@@ -129,12 +110,11 @@ services:
     restart: unless-stopped
 
   # ================================================================
-  #  WEBSSH — Linux: SSH vào host runner (full host access)
-  #  Có thể chạy mọi lệnh trên host, xem toàn bộ filesystem
+  #  WEBSSH — Terminal SSH vào host qua trình duyệt (ttyd)
+  #  ⚠️  Nên bật basic_auth để tránh expose terminal ra public
   # ================================================================
   webssh:
-    profiles: ["linux-only"]
-    build: ./services/webssh
+    build: ./services/webssh # ← đổi image thành build
     command:
       - "ttyd"
       - "-W"
@@ -144,7 +124,7 @@ services:
       - "-o"
       - "StrictHostKeyChecking=no"
       - "-o"
-      - "UserKnownHostsFile=/dev/null"
+      - "UserKnownHostsFile=/dev/null" # ← không ghi known_hosts
       - "-o"
       - "ConnectTimeout=10"
       - "-t"
@@ -154,31 +134,6 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./services/webssh/.ssh:/root/.ssh:ro
-    labels:
-      - "caddy=http://${SUBDOMAIN_WEBSSH:-ttyd-my-docker-app}.${DOMAIN}"
-      - "caddy.reverse_proxy={{upstreams 7681}}"
-      - "caddy.basic_auth=/*"
-      - "caddy.basic_auth.${CADDY_AUTH_USER}=${CADDY_AUTH_HASH}"
-    networks: [app_net]
-    restart: unless-stopped
-
-  # ================================================================
-  #  WEBSSH — Windows: ttyd + docker CLI qua named pipe
-  #  Dùng để debug: docker logs, compose, exec khi có lỗi
-  # ================================================================
-  webssh-windows:
-    profiles: ["windows-only"]
-    build: ./services/webssh-docker
-    command: ["ttyd", "-W", "bash"]
-    environment:
-      COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME:-myapp}"
-      COMPOSE_FILE: /workspace/docker-compose.yml
-    volumes:
-      - type: npipe
-        source: \\.\pipe\docker_engine
-        target: /var/run/docker.sock
-      - .:/workspace
-    working_dir: /workspace
     labels:
       - "caddy=http://${SUBDOMAIN_WEBSSH:-ttyd-my-docker-app}.${DOMAIN}"
       - "caddy.reverse_proxy={{upstreams 7681}}"
