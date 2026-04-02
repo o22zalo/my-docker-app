@@ -12,7 +12,8 @@ env:
 jobs:
   deploy:
     # ✅ Đổi ở đây để chọn runner: ubuntu-latest | windows-latest
-    runs-on: windows-latest
+    # runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
