@@ -11,7 +11,7 @@ env:
 jobs:
   deploy:
     # ✅ Đổi ở đây để test: ubuntu-latest | windows-latest
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
