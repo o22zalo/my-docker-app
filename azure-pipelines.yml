@@ -9,9 +9,9 @@ pr: none
 pool:
   vmImage: "ubuntu-latest"
 
-variables:
-  # Cấu hình tại Azure Pipeline/Variable Group (secret variable)
-  RTDB_URL: $(RTDB_URL)
+# variables:
+#   # Cấu hình tại Azure Pipeline/Variable Group (secret variable)
+#   RTDB_URL: $(RTDB_URL)
 
 steps:
   - checkout: self
