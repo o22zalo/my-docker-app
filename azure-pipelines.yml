@@ -7,7 +7,8 @@ trigger: none
 pr: none
 
 pool:
-  vmImage: "ubuntu-latest"
+  # ✅ Đổi ở đây để chọn runner: ubuntu-latest | windows-latest
+  vmImage: "windows-latest"
 
 # variables:
 #   # Cấu hình tại Azure Pipeline/Variable Group (secret variable)
